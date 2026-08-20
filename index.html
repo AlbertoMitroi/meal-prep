@@ -148,20 +148,22 @@ main{padding:12px 14px calc(84px + var(--safe-b))}
   background:var(--card);border:1px solid var(--line);border-radius:var(--r);
   box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;
 }
-.head{display:flex;align-items:center;gap:12px;padding:13px 14px 12px}
+/* Antetul folosește aceeași grilă de 4 coloane ca banda de macro:
+   iconul ocupă prima coloană, titlul celelalte trei. */
+.head{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;align-items:center;padding:14px 14px 10px}
 .ico{
-  flex:0 0 auto;height:50px;min-width:50px;padding:0 11px;border-radius:15px;background:var(--soft);
-  display:flex;align-items:center;justify-content:center;gap:5px;font-size:22px;line-height:1;
+  height:54px;border-radius:14px;background:var(--soft);
+  display:flex;align-items:center;justify-content:center;gap:3px;font-size:19px;line-height:1;
 }
-.ico i{font-style:normal;font-size:13px;font-weight:800;color:var(--accent);opacity:.55}
-.htx{min-width:0}
-.htx b{display:block;font-size:16px;font-weight:800;letter-spacing:-.022em;line-height:1.22}
+.ico i{font-style:normal;font-size:12px;font-weight:800;color:var(--accent);opacity:.5}
+.htx{grid-column:span 3;min-width:0;padding-left:5px}
+.htx b{display:block;font-size:17px;font-weight:800;letter-spacing:-.025em;line-height:1.2}
 
 .mstrip{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:0 14px 14px}
-.mstrip div{background:var(--soft);border-radius:12px;padding:9px 3px;text-align:center}
-.mstrip b{display:block;font-size:15px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-.mstrip b i{font-style:normal;font-size:10px;font-weight:700;margin-left:1px}
-.mstrip span{display:block;font-size:8.5px;text-transform:uppercase;letter-spacing:.07em;font-weight:900;color:var(--muted);margin-top:3px}
+.mstrip div{background:var(--soft);border-radius:14px;min-height:54px;padding:4px 3px;text-align:center;display:flex;flex-direction:column;justify-content:center}
+.mstrip b{display:block;font-size:14px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.mstrip b i{font-style:normal;font-size:9.5px;font-weight:700;margin-left:1px}
+.mstrip span{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.07em;font-weight:900;color:var(--muted);margin-top:3px}
 .mstrip div:first-child{background:var(--accentSoft)}
 .mstrip div:first-child b{color:var(--accent)}
 
