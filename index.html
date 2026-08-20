@@ -74,10 +74,20 @@ ol{margin:0;padding-left:1.15em}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px 9px}
 .topbar h1{font-size:18px;font-weight:800;letter-spacing:-.025em}
 
-.gender{display:flex;gap:2px;padding:3px;background:var(--soft);border-radius:999px;flex:0 0 auto}
-.g{width:42px;height:34px;border-radius:999px;display:grid;place-items:center;font-size:16px;line-height:1;transition:background .18s,transform .12s;filter:grayscale(1);opacity:.5}
-.g[aria-pressed="true"]{background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,.07);filter:none;opacity:1}
-.g:active{transform:scale(.93)}
+.gswitch{position:relative;display:flex;gap:2px;padding:3px;background:var(--soft);border-radius:999px;flex:0 0 auto}
+.gswitch:active{transform:scale(.96)}
+.knob{
+  position:absolute;top:3px;left:3px;width:42px;height:34px;border-radius:999px;
+  background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,.09);
+  transition:transform .24s cubic-bezier(.4,0,.2,1);
+}
+.gswitch[data-g="f"] .knob{transform:translateX(44px)}
+.gi{
+  position:relative;z-index:1;width:42px;height:34px;display:grid;place-items:center;
+  font-size:16px;line-height:1;filter:grayscale(1);opacity:.45;transition:filter .2s,opacity .2s;
+}
+.gswitch[data-g="m"] .gi[data-for="m"],
+.gswitch[data-g="f"] .gi[data-for="f"]{filter:none;opacity:1}
 
 .mealbar{display:none;gap:6px;padding:0 14px 10px;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity}
 .mealbar::-webkit-scrollbar{display:none}
@@ -222,10 +232,11 @@ main{padding:12px 14px calc(84px + var(--safe-b))}
   <div class="stickytop" id="stickytop">
     <div class="topbar">
       <h1 id="viewTitle">Mese</h1>
-      <div class="gender" role="group" aria-label="Profil">
-        <button class="g" data-g="m" aria-pressed="true" aria-label="Bărbat" title="Bărbat">👨</button>
-        <button class="g" data-g="f" aria-pressed="false" aria-label="Femeie" title="Femeie">👩</button>
-      </div>
+      <button class="gswitch" id="gswitch" data-g="m" role="switch" aria-checked="false">
+        <span class="knob" aria-hidden="true"></span>
+        <span class="gi" data-for="m" aria-hidden="true">👨</span>
+        <span class="gi" data-for="f" aria-hidden="true">👩</span>
+      </button>
     </div>
     <div class="mealbar" id="mealbar" role="tablist" aria-label="Mese"></div>
   </div>
@@ -412,7 +423,7 @@ const week = DAYS.map((day,i)=>{
    STATE
    ============================================================ */
 const STORE = "mealplan.app";
-let gender = "m", activeMeal = 1, selP2 = 0, selG2 = 0, selP3 = 0, bought = {};
+let gender = "m", activeMeal = 1, selP2 = 0, selG2 = 0, selP3 = 0, bought = {}, shopFor = "both";
 try{
   const raw = JSON.parse(localStorage.getItem(STORE) || "{}");
   if(raw.gender === "f") gender = "f";
@@ -423,10 +434,11 @@ try{
     if(raw.sel.p3 >= 0 && raw.sel.p3 < PROTEINE.length) selP3 = raw.sel.p3;
   }
   if(raw.bought && typeof raw.bought === "object") bought = raw.bought;
+  if(["both","m","f"].includes(raw.shopFor)) shopFor = raw.shopFor;
 }catch(e){}
 function save(){
   try{ localStorage.setItem(STORE, JSON.stringify({
-    gender, meal:activeMeal, sel:{p2:selP2, g2:selG2, p3:selP3}, bought
+    gender, meal:activeMeal, sel:{p2:selP2, g2:selG2, p3:selP3}, bought, shopFor
   })) }catch(e){}
 }
 
@@ -436,7 +448,8 @@ function save(){
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmt = (n,d=0) => Number(n).toFixed(d).replace(/\.0$/,"");
-const amount = i => gender === "m" ? i[1] : i[2];
+const amountFor = (i,g) => g === "m" ? i[1] : i[2];
+const amount = i => amountFor(i, gender);
 /* Emoji-urile combinației, legate cu „+". */
 const emHTML = r => r.em.join("<i>+</i>");
 
@@ -564,16 +577,24 @@ function renderWeek(){
 /* Nu se cumpără săptămânal: apa, gheața, creatina. */
 const NO_SHOP = /^(Apă( \/ gheață)?|Creatină)$/;
 
+/* Implicit se cumpără pentru amândoi: se adună porția de bărbat cu cea de femeie. */
+const SHOP_MODES = [
+  {id:"both", em:"👨👩", nume:"Amândoi"},
+  {id:"m",    em:"👨",   nume:"Bărbat"},
+  {id:"f",    em:"👩",   nume:"Femeie"}
+];
+
 function shoppingData(){
+  const who = shopFor === "both" ? ["m","f"] : [shopFor];
   const sums = {}, loose = new Set();
   week.forEach(d => d.ids.map(getRecipe).forEach(r => r.ing.forEach(i=>{
-    const key = i[3], q = amount(i);
-    if(!key || typeof q !== "number"){
+    const key = i[3];
+    if(!key || typeof i[1] !== "number"){
       if(!NO_SHOP.test(i[0])) loose.add(i[0]);
       return;
     }
     const sk = FOOD[key].shop || key;
-    sums[sk] = (sums[sk] || 0) + q;
+    who.forEach(g => sums[sk] = (sums[sk] || 0) + amountFor(i, g));
   })));
   return {sums, loose:[...loose]};
 }
@@ -584,13 +605,21 @@ function renderShop(){
   const done = Object.keys(sums).filter(k=>bought[k]).length + loose.filter(l=>bought["_"+l]).length;
   const check = `<svg viewBox="0 0 24 24"><path d="m5 13 4 4L19 7"/></svg>`;
 
+  const mode = SHOP_MODES.find(x=>x.id === shopFor);
   let html = `<div class="shop-head">
       <div>
         <b>${done} din ${total} bifate</b>
-        <span>Pentru 7 zile · profil ${gender === "m" ? "bărbat" : "femeie"}</span>
+        <span>Pentru 7 zile · ${mode.nume.toLowerCase()}</span>
       </div>
       <button class="reset" id="resetShop">Resetează</button>
-    </div>`;
+    </div>
+    <div class="picker"><div class="prow">
+      <span class="plbl">Cumperi pentru</span>
+      <div class="opts">${SHOP_MODES.map(m=>`
+        <button class="opt" data-shop="${m.id}" aria-pressed="${m.id===shopFor}">
+          <span class="oem">${m.em}</span><span>${m.nume}</span>
+        </button>`).join("")}</div>
+    </div></div>`;
 
   CATS.forEach(([cat,label])=>{
     const items = Object.keys(sums)
@@ -679,6 +708,8 @@ $("week").addEventListener("click", e=>{
 
 $("shop").addEventListener("click", e=>{
   if(e.target.closest("#resetShop")){ bought = {}; save(); renderShop(); return }
+  const m = e.target.closest("[data-shop]");
+  if(m){ shopFor = m.dataset.shop; save(); renderShop(); return }
   const b = e.target.closest(".si"); if(!b) return;
   const k = b.dataset.k;
   if(bought[k]) delete bought[k]; else bought[k] = 1;
@@ -692,16 +723,21 @@ const THEME_COLOR = {m:"#E8F5E9", f:"#F4F1F3"};
 function applyTheme(){
   document.documentElement.dataset.gender = gender;
   $("themeColor").setAttribute("content", THEME_COLOR[gender]);
-  document.querySelectorAll("[data-g]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.g===gender));
+  const sw = $("gswitch");
+  sw.dataset.g = gender;
+  sw.setAttribute("aria-checked", gender === "f");
+  sw.setAttribute("aria-label", gender === "m"
+    ? "Profil bărbat — apasă pentru femeie"
+    : "Profil femeie — apasă pentru bărbat");
 }
 
-document.querySelectorAll("[data-g]").forEach(b=> b.onclick = ()=>{
-  if(gender === b.dataset.g) return;
-  gender = b.dataset.g;
+/* Oriunde ai apăsa, comutatorul trece pe celălalt profil. */
+$("gswitch").onclick = ()=>{
+  gender = gender === "m" ? "f" : "m";
   applyTheme();
   renderAll(); save();
   if(navigator.vibrate) try{ navigator.vibrate(8) }catch(e){}
-});
+};
 
 const st = $("stickytop");
 addEventListener("scroll", ()=> st.classList.toggle("scrolled", window.scrollY > 4), {passive:true});
