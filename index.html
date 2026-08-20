@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" />
+<meta name="theme-color" content="#E8F5E9" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="description" content="Planul de mese: rețete, plan săptămânal și listă de cumpărături." />
+<title>Planul meselor</title>
+<style>
+:root{
+  color-scheme:light;
+  /* Paletă Color Hunt: #E8F5E9 #A5D6A7 #66BB6A #1B5E20
+     colorhunt.co/palette/1b5e2066bb6aa5d6a7e8f5e9 */
+  --bg:#E8F5E9;          /* mentă deschis — fundalul aplicației */
+  --card:#FFFFFF;
+  --soft:#DCEEDD;        /* verde foarte pal — chipsuri, plăcuțe */
+  --soft-2:#A5D6A7;      /* verde pal — linii punctate, borduri bifă */
+  --line:#CBE6CD;        /* linii și borduri */
+  --sage:#66BB6A;        /* verde mediu — accent secundar */
+  --accentSoft:#CDE9CF;  /* verde diluat — fundaluri de secțiune */
+  --accent:#1B5E20;      /* verde pădure — accentul principal */
+  --text:#16261A; --muted:#52654F;
+  --r:18px; --r-sm:14px;
+  --shadow:0 6px 22px rgba(0,0,0,.05);
+  --tap:44px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:15px;line-height:1.4;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+  overscroll-behavior-y:none;
+}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;touch-action:manipulation;text-align:left}
+h1,h2,h3,p{margin:0}
+ol{margin:0;padding-left:1.15em}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.app{max-width:520px;margin-inline:auto}
+
+/* ================= header ================= */
+.stickytop{
+  position:sticky;top:0;z-index:30;
+  background:rgba(232,245,233,.95);
+  backdrop-filter:saturate(1.6) blur(16px);-webkit-backdrop-filter:saturate(1.6) blur(16px);
+  border-bottom:1px solid transparent;transition:border-color .2s;
+  padding-top:var(--safe-t);
+}
+.stickytop.scrolled{border-bottom-color:var(--line)}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px 9px}
+.topbar h1{font-size:18px;font-weight:800;letter-spacing:-.025em}
+
+.gender{display:flex;gap:2px;padding:3px;background:var(--soft);border-radius:999px;flex:0 0 auto}
+.g{width:42px;height:34px;border-radius:999px;display:grid;place-items:center;font-size:16px;line-height:1;transition:background .18s,transform .12s;filter:grayscale(1);opacity:.5}
+.g[aria-pressed="true"]{background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,.07);filter:none;opacity:1}
+.g:active{transform:scale(.93)}
+
+.mealbar{display:none;gap:6px;padding:0 14px 10px;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity}
+.mealbar::-webkit-scrollbar{display:none}
+.app[data-tab="mese"] .mealbar{display:flex}
+.chip{
+  flex:0 0 auto;scroll-snap-align:start;min-height:36px;padding:0 14px;border-radius:999px;
+  background:var(--card);border:1px solid var(--line);
+  font-size:12.5px;font-weight:700;color:var(--muted);
+  display:inline-flex;align-items:center;
+  transition:background .18s,color .18s,border-color .18s,transform .12s;
+}
+.chip[aria-selected="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chip:active{transform:scale(.96)}
+.app:not([data-tab="mese"]) .topbar{padding-bottom:13px}
+
+/* ================= views ================= */
+main{padding:12px 14px calc(84px + var(--safe-b))}
+.view{display:none;animation:fade .2s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ================= selector ================= */
+.picker{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--shadow);padding:12px 0 2px;margin-bottom:12px;
+}
+.prow{padding-bottom:10px}
+.plbl{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;color:var(--muted);padding:0 14px 7px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(102px,1fr));gap:6px;padding:0 14px}
+.opts.wide{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}
+.opt{
+  min-height:38px;padding:0 8px;border-radius:999px;
+  background:var(--soft);font-size:12.5px;font-weight:700;color:var(--muted);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:background .16s,color .16s,transform .12s;
+}
+.opt[aria-pressed="true"]{background:var(--accent);color:#fff}
+.opt:active{transform:scale(.96)}
+.oem{font-size:14px;line-height:1}
+
+/* ================= card rețetă ================= */
+.recipe{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;
+}
+.head{display:flex;align-items:center;gap:12px;padding:13px 14px}
+.ico{
+  flex:0 0 auto;height:50px;min-width:50px;padding:0 11px;border-radius:15px;background:var(--soft);
+  display:flex;align-items:center;justify-content:center;gap:5px;font-size:22px;line-height:1;
+}
+.ico i{font-style:normal;font-size:13px;font-weight:800;color:var(--accent);opacity:.55}
+.htx{min-width:0}
+.htx b{display:block;font-size:15.5px;font-weight:800;letter-spacing:-.022em;line-height:1.22}
+.htx span{display:block;margin-top:4px;font-size:11px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+
+.ing-block{padding:12px 14px 13px;border-top:1px solid var(--line)}
+.lbl-sec{display:flex;align-items:baseline;justify-content:space-between;font-size:9px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;color:var(--muted);margin-bottom:7px}
+.lbl-sec em{font-style:normal;letter-spacing:0;text-transform:none;font-size:11px;font-weight:700}
+.ing div{display:flex;justify-content:space-between;gap:14px;font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--soft-2)}
+.ing div:last-child{border-bottom:0;padding-bottom:0}
+.ing i{font-style:normal;color:var(--muted);font-weight:700;text-align:right;flex:0 0 auto}
+
+.more{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:6px;
+  min-height:42px;border-top:1px solid var(--line);
+  font-size:11px;font-weight:900;color:var(--accent);
+}
+.more svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s}
+.recipe.open .more svg{transform:rotate(180deg)}
+.drawer{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s cubic-bezier(.4,0,.2,1)}
+.recipe.open .drawer{grid-template-rows:1fr}
+.drawer>div{overflow:hidden}
+.drawer-in{padding:14px;border-top:1px solid var(--line);background:#F6FBF6}
+.rdesc{font-size:12px;color:var(--muted);line-height:1.45;margin:0 0 14px}
+.steps{font-size:12.5px;line-height:1.55;color:var(--muted)}
+.steps li+li{margin-top:6px}
+.steps li::marker{color:var(--accent);font-weight:800}
+.micros{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:15px}
+.micros div{background:var(--soft);border-radius:11px;padding:8px 3px;text-align:center}
+.micros b{display:block;font-size:11.5px;font-weight:800;font-variant-numeric:tabular-nums}
+.micros span{display:block;font-size:9px;color:var(--muted);margin-top:2px;font-weight:700}
+
+/* ================= plan săptămânal ================= */
+.day{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden}
+.day-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px 10px}
+.day-head b{font-size:15px;font-weight:800;letter-spacing:-.02em}
+.day-head span{font-size:10.5px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+.dm{display:flex;align-items:center;gap:11px;width:100%;padding:9px 14px;border-top:1px solid var(--line)}
+.dm:active{background:var(--soft)}
+.dth{
+  flex:0 0 auto;height:38px;min-width:38px;padding:0 8px;border-radius:11px;background:var(--soft);
+  display:flex;align-items:center;justify-content:center;gap:4px;font-size:16px;line-height:1;
+}
+.dth i{font-style:normal;font-size:10px;font-weight:800;color:var(--muted);opacity:.65}
+.dtx{flex:1;min-width:0}
+.dtx small{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:900;color:var(--muted)}
+.dtx b{display:block;font-size:13px;font-weight:700;letter-spacing:-.01em;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dk{flex:0 0 auto;font-size:10.5px;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* ================= listă cumpărături ================= */
+.shop-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--accentSoft);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:12px;
+}
+.shop-head b{display:block;font-size:12.5px;font-weight:800;color:var(--accent)}
+.shop-head span{display:block;font-size:10.5px;color:var(--accent);opacity:.75;font-weight:600;margin-top:2px}
+.reset{background:rgba(255,255,255,.7);border-radius:10px;padding:9px 11px;font-size:11px;font-weight:800;color:var(--accent);flex:0 0 auto}
+
+.cat{margin-bottom:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.cat h3{font-size:9px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;color:var(--muted);padding:12px 14px 8px}
+.si{display:flex;align-items:center;gap:11px;width:100%;padding:10px 14px;border-top:1px solid var(--line)}
+.si:active{background:var(--soft)}
+.cb{flex:0 0 auto;width:20px;height:20px;border-radius:7px;border:1.8px solid var(--soft-2);display:grid;place-items:center;transition:.18s}
+.cb svg{width:11px;height:11px;stroke:#fff;fill:none;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .15s}
+.si[aria-pressed="true"] .cb{background:var(--accent);border-color:var(--accent)}
+.si[aria-pressed="true"] .cb svg{opacity:1}
+.sem{flex:0 0 auto;font-size:16px;line-height:1;width:20px;text-align:center}
+.si-name{flex:1;min-width:0;font-size:13px;font-weight:600}
+.si-qty{flex:0 0 auto;font-size:11.5px;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+.si[aria-pressed="true"] .si-name,.si[aria-pressed="true"] .si-qty{text-decoration:line-through;opacity:.42}
+.si[aria-pressed="true"] .sem{filter:grayscale(1);opacity:.4}
+
+/* ================= tabbar ================= */
+.tabbar{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:40;
+  width:100%;max-width:520px;display:grid;grid-template-columns:repeat(3,1fr);
+  background:rgba(232,245,233,.95);
+  backdrop-filter:saturate(1.6) blur(16px);-webkit-backdrop-filter:saturate(1.6) blur(16px);
+  border-top:1px solid var(--line);padding-bottom:var(--safe-b);
+}
+.tb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:54px;color:var(--muted);transition:color .18s}
+.tb .tem{font-size:19px;line-height:1;filter:grayscale(1);opacity:.55;transition:.18s}
+.tb span{font-size:9.5px;font-weight:800;letter-spacing:.02em}
+.tb[aria-selected="true"]{color:var(--accent)}
+.tb[aria-selected="true"] .tem{filter:none;opacity:1}
+.tb:active{transform:scale(.94)}
+</style>
+</head>
+<body>
+
+<div class="app" data-tab="mese" id="app">
+  <div class="stickytop" id="stickytop">
+    <div class="topbar">
+      <h1 id="viewTitle">Mese</h1>
+      <div class="gender" role="group" aria-label="Profil">
+        <button class="g" data-g="m" aria-pressed="true" aria-label="Bărbat" title="Bărbat">👨</button>
+        <button class="g" data-g="f" aria-pressed="false" aria-label="Femeie" title="Femeie">👩</button>
+      </div>
+    </div>
+    <div class="mealbar" id="mealbar" role="tablist" aria-label="Mese"></div>
+  </div>
+
+  <main>
+    <section class="view active" id="view-mese"><div id="meals"></div></section>
+    <section class="view" id="view-plan"><div id="week"></div></section>
+    <section class="view" id="view-lista"><div id="shop"></div></section>
+  </main>
+
+  <nav class="tabbar" role="tablist" aria-label="Navigare">
+    <button class="tb" data-tab="mese" aria-selected="true"><span class="tem">🍽️</span><span>Mese</span></button>
+    <button class="tb" data-tab="plan" aria-selected="false"><span class="tem">📅</span><span>Săptămânal</span></button>
+    <button class="tb" data-tab="lista" aria-selected="false"><span class="tem">🛒</span><span>Cumpărături</span></button>
+  </nav>
+</div>
+
+<script>
+/* ============================================================
+   PLANUL ANTRENORULUI
+
+   Masa 1  200 g iaurt grecesc 2% + 50 g ovăz + 50 g fructe de pădure
+           SAU omletă 2 ouă + 3 albușuri + 50 g ovăz + cottage + salată
+   Masa 2  200 g orez brun/alb (fiert) / cartofi dulci / cartofi copți /
+           paste integrale + 150 g pui / curcan / vită / pește + salată-legume
+   Masa 3  shake proteic după antrenament (2 cupe proteină + 1 cupă creatină)
+           SAU smoothie doar din fructe
+   Masa 4  150 g pui / curcan / vită / pește + salată-legume
+
+   Singura abatere: mesele 3 și 4 sunt inversate în aplicație, pentru că
+   antrenamentul e seara și cina nu poate fi la miezul nopții.
+   Totul se cântărește gătit (ovăzul se cântărește uscat).
+   ============================================================ */
+const MEALS = [1,2,3,4];
+const mealShort = {1:"Mic dejun",2:"Principal",3:"Cină",4:"După antrenament"};
+const KEYS = ["kcal","p","c","f","fiber","calcium","iron","potassium","vitC","magnesium"];
+const DAYS = ["Luni","Marți","Miercuri","Joi","Vineri","Sâmbătă","Duminică"];
+const VIEW_TITLE = {mese:"Mese", plan:"Plan săptămânal", lista:"Listă cumpărături"};
+
+/* ============================================================
+   TABEL NUTRIȚIONAL PE INGREDIENT
+   n = [kcal,p,c,f,fibre,calciu,fier,potasiu,vitC,magneziu]
+   u = "g" (valori la 100 g) sau "buc" (valori pentru 1 bucată).
+   Orezul, cartofii, pastele și carnea sunt valori pentru produs GĂTIT.
+   ============================================================ */
+const FOOD = {
+  chicken:    {u:"g",  n:[165, 31,   0,   3.6,   0,  15, 1.0, 256,    0,  29], cat:"prot", lbl:"Piept de pui",     em:"🍗"},
+  turkey:     {u:"g",  n:[147, 30,   0,   2,     0,  12, 1.2, 250,    0,  28], cat:"prot", lbl:"Piept de curcan",  em:"🦃"},
+  beef:       {u:"g",  n:[217, 30,   0,  10,     0,  18, 2.9, 330,    0,  24], cat:"prot", lbl:"Vită slabă",       em:"🥩"},
+  fish:       {u:"g",  n:[105, 23,   0,   1.2,   0,  20, 0.4, 450,    0,  35], cat:"prot", lbl:"Pește alb",        em:"🐟"},
+  whey:       {u:"g",  n:[400, 80,  10,   5,     0, 400, 1.7, 500,    0,  83], cat:"prot", lbl:"Pudră proteică",   em:"🥤"},
+
+  yogurt:     {u:"g",  n:[ 73, 10,   4,   2,     0, 110, 0.1, 141,    0,  11], cat:"lact", lbl:"Iaurt grecesc 2%", em:"🥛"},
+  cottage:    {u:"g",  n:[ 98, 11,   3.4, 4.3,   0,  83, 0.1, 104,    0,   8], cat:"lact", lbl:"Brânză cottage",   em:"🧀"},
+  egg:        {u:"buc",n:[ 72, 6.3,  0.4, 4.8,   0,  28, 0.9,  69,    0,   6], cat:"lact", lbl:"Ouă",              em:"🥚"},
+  white:      {u:"buc",n:[ 17, 3.6,  0.2, 0.1,   0,   2,   0,  54,    0,   4], cat:"lact", lbl:"Ouă", shop:"egg",  em:"🥚"},
+
+  oats:       {u:"g",  n:[379, 13.2,67.7, 6.5, 10.1,  52, 4.3, 362,    0, 138], cat:"cer", lbl:"Fulgi de ovăz",    em:"🥣"},
+  riceBrown:  {u:"g",  n:[123, 2.7, 25.6, 1.0,  1.6,   3, 0.6,  86,    0,  43], cat:"cer", lbl:"Orez brun",        em:"🌾"},
+  riceWhite:  {u:"g",  n:[130, 2.7, 28,   0.3,  0.4,  10, 0.2,  35,    0,  12], cat:"cer", lbl:"Orez alb",         em:"🍚"},
+  sweetPot:   {u:"g",  n:[ 90, 2.0, 20.7, 0.15, 3.3,  38, 0.7, 475, 19.6,  27], cat:"cer", lbl:"Cartofi dulci",    em:"🍠"},
+  potato:     {u:"g",  n:[ 93, 2.5, 21,   0.1,  2.2,  10, 1.1, 535,   10,  28], cat:"cer", lbl:"Cartofi",          em:"🥔"},
+  pasta:      {u:"g",  n:[124, 5.3, 26.5, 0.5,  4.5,  15, 1.1,  62,    0,  42], cat:"cer", lbl:"Paste integrale",  em:"🍝"},
+
+  berries:    {u:"g",  n:[ 50, 0.8, 11,   0.4,  4.5,  25, 0.5, 100,   20,  15], cat:"fruct",lbl:"Fructe de pădure",em:"🫐"},
+  banana:     {u:"g",  n:[ 89, 1.1, 23,   0.3,  2.6,   5, 0.3, 358,  8.7,  27], cat:"fruct",lbl:"Banane",          em:"🍌"},
+  orange:     {u:"g",  n:[ 47, 0.9, 12,   0.1,  2.4,  40, 0.1, 181,   53,  10], cat:"fruct",lbl:"Portocale",       em:"🍊"},
+
+  salad:      {u:"g",  n:[ 18, 1,    3.3, 0.2,  1.3,  25, 0.6, 240,   22,  12], cat:"leg",  lbl:"Salată și legume",em:"🥗"}
+};
+const CATS = [
+  ["prot","Proteine"],["lact","Lactate și ouă"],["cer","Cereale și garnituri"],
+  ["leg","Legume"],["fruct","Fructe"]
+];
+
+/* ============================================================
+   OPȚIUNILE DIN PLAN — cantități [bărbat, femeie]
+   ============================================================ */
+const PROTEINE = [
+  {nume:"Pui",    ing:"Piept de pui",    key:"chicken", em:"🍗", gen:"puiul",    vb:"gătește-l"},
+  {nume:"Curcan", ing:"Piept de curcan", key:"turkey",  em:"🦃", gen:"curcanul", vb:"gătește-l"},
+  {nume:"Vită",   ing:"Vită slabă",      key:"beef",    em:"🥩", gen:"vita",     vb:"gătește-o"},
+  {nume:"Pește",  ing:"Pește alb",       key:"fish",    em:"🐟", gen:"peștele",  vb:"gătește-l"}
+];
+const GARNITURI = [
+  {nume:"orez brun",       lbl:"Orez brun",     art:"orezul brun",       ing:"Orez brun gătit",        key:"riceBrown", em:"🌾"},
+  {nume:"orez alb",        lbl:"Orez alb",      art:"orezul alb",        ing:"Orez alb gătit",         key:"riceWhite", em:"🍚"},
+  {nume:"cartofi dulci",   lbl:"Cartofi dulci", art:"cartofii dulci",    ing:"Cartofi dulci copți",    key:"sweetPot",  em:"🍠"},
+  {nume:"cartofi copți",   lbl:"Cartofi copți", art:"cartofii copți",    ing:"Cartofi copți",          key:"potato",    em:"🥔"},
+  {nume:"paste integrale", lbl:"Paste",         art:"pastele integrale", ing:"Paste integrale gătite", key:"pasta",     em:"🍝"}
+];
+const G_GARN = [200,150];   // garnitură
+const G_PROT = [150,120];   // proteină
+const G_LEG  = [200,200];   // salată și legume
+
+/* ============================================================
+   REȚETE
+   ing = [nume, cantitate bărbat, cantitate femeie, cheie FOOD, [notă B, notă F]]
+   ============================================================ */
+const STATIC = [
+  {id:"m1-a", meal:1, name:"Iaurt grecesc cu ovăz și fructe de pădure", em:["🥣","🫐"],
+   desc:"Se poate mânca rece, lăsat peste noapte la frigider, sau cald, ca terci.",
+   ing:[["Iaurt grecesc 2%",200,160,"yogurt"],["Fulgi de ovăz",50,40,"oats"],
+        ["Fructe de pădure",50,50,"berries"],["Apă / lapte","după consistență","după consistență",null]],
+   steps:["Amestecă ovăzul cu iaurtul.",
+          "Rece: lasă peste noapte la frigider.",
+          "Cald: fierbe ovăzul în apă, lasă-l 2–3 minute să se răcească, apoi încorporează iaurtul.",
+          "Pune fructele de pădure la final."]},
+
+  {id:"m1-b", meal:1, name:"Omletă cu ovăz, cottage și salată", em:["🍳","🥗"],
+   desc:"Omletă din ouă întregi și albușuri, cu ovăz, brânză cottage și salată.",
+   ing:[["Ouă întregi",2,2,"egg"],["Albușuri",3,2,"white"],["Fulgi de ovăz",50,35,"oats"],
+        ["Brânză cottage",100,80,"cottage"],["Salată / legume",150,150,"salad"]],
+   steps:["Bate ouăle întregi împreună cu albușurile.",
+          "Prepară omleta în tigaie.",
+          "Pregătește ovăzul — fiert ca terci sărat sau copt în tigaie ca o lipie.",
+          "Servește cu brânza cottage și salata."]},
+
+  {id:"m4-a", meal:4, name:"Shake proteic", em:["🥤"],
+   desc:"Imediat după antrenament, la întoarcerea de la sală.",
+   ing:[["Pudră proteică",60,45,"whey",["2 cupe","1,5 cupe"]],
+        ["Creatină","1 cupă","1 cupă",null],
+        ["Apă","după preferință","după preferință",null]],
+   steps:["Pune apa în shaker.","Adaugă proteina și creatina.","Agită bine."]},
+
+  {id:"m4-b", meal:4, name:"Smoothie de fructe", em:["🍓","🍌"],
+   desc:"Doar din fructe, fără iaurt și fără proteină.",
+   ing:[["Banană",120,100,"banana"],["Fructe de pădure",100,100,"berries"],
+        ["Portocală",150,150,"orange"],["Apă / gheață","după preferință","după preferință",null]],
+   steps:["Taie fructele.","Pune-le în blender.","Adaugă apă sau gheață.","Mixează."]}
+];
+
+/* Masa principală și cina se compun la alegere. */
+function buildM2(pi,gi){
+  const p = PROTEINE[pi], g = GARNITURI[gi];
+  return {
+    id:`m2-${pi}${gi}`, meal:2, name:`${p.nume} cu ${g.nume}`, em:[p.em, g.em],
+    desc:`${g.ing} cu ${p.ing.toLowerCase()} și salată sau legume proaspete.`,
+    ing:[[g.ing,G_GARN[0],G_GARN[1],g.key],
+         [p.ing,G_PROT[0],G_PROT[1],p.key],
+         ["Salată / legume",G_LEG[0],G_LEG[1],"salad"]],
+    steps:[`Condimentează ${p.gen} și ${p.vb} în tigaie sau la cuptor.`,
+           `Pregătește ${g.art}.`,
+           "Adaugă salata sau legumele proaspete.",
+           "Cântărește porțiile după gătire."]
+  };
+}
+function buildM3(pi){
+  const p = PROTEINE[pi];
+  return {
+    id:`m3-${pi}`, meal:3, name:`${p.nume} cu salată și legume`, em:[p.em, "🥗"],
+    desc:`${p.ing} cu salată sau legume proaspete, fără garnitură.`,
+    ing:[[p.ing,G_PROT[0],G_PROT[1],p.key],
+         ["Salată / legume",G_LEG[0],G_LEG[1],"salad"]],
+    steps:[`Condimentează ${p.gen} și ${p.vb}.`,
+           "Pregătește salata sau legumele.",
+           "Servește imediat.",
+           "Cântărește porția după gătire."]
+  };
+}
+function getRecipe(id){
+  if(id.startsWith("m2-")) return buildM2(+id[3], +id[4]);
+  if(id.startsWith("m3-")) return buildM3(+id[3]);
+  return STATIC.find(r => r.id === id);
+}
+
+/* ============================================================
+   PLANUL SĂPTĂMÂNAL
+   Cina primește mereu altă sursă de proteină decât masa principală.
+   ============================================================ */
+const week = DAYS.map((day,i)=>{
+  const p2 = (i*3) % PROTEINE.length;
+  const g2 = (i*2) % GARNITURI.length;
+  const p3 = (p2 + 1 + 2*i) % PROTEINE.length;
+  return {day, ids:[
+    i % 2 === 0 ? "m1-a" : "m1-b",
+    `m2-${p2}${g2}`,
+    `m3-${p3}`,
+    i % 3 === 2 ? "m4-b" : "m4-a"
+  ]};
+});
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const STORE = "mealplan.app";
+let gender = "m", activeMeal = 1, selP2 = 0, selG2 = 0, selP3 = 0, bought = {};
+try{
+  const raw = JSON.parse(localStorage.getItem(STORE) || "{}");
+  if(raw.gender === "f") gender = "f";
+  if(MEALS.includes(raw.meal)) activeMeal = raw.meal;
+  if(raw.sel){
+    if(raw.sel.p2 >= 0 && raw.sel.p2 < PROTEINE.length) selP2 = raw.sel.p2;
+    if(raw.sel.g2 >= 0 && raw.sel.g2 < GARNITURI.length) selG2 = raw.sel.g2;
+    if(raw.sel.p3 >= 0 && raw.sel.p3 < PROTEINE.length) selP3 = raw.sel.p3;
+  }
+  if(raw.bought && typeof raw.bought === "object") bought = raw.bought;
+}catch(e){}
+function save(){
+  try{ localStorage.setItem(STORE, JSON.stringify({
+    gender, meal:activeMeal, sel:{p2:selP2, g2:selG2, p3:selP3}, bought
+  })) }catch(e){}
+}
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = (n,d=0) => Number(n).toFixed(d).replace(/\.0$/,"");
+const amount = i => gender === "m" ? i[1] : i[2];
+/* Emoji-urile combinației, legate cu „+". */
+const emHTML = r => r.em.join("<i>+</i>");
+
+function nutri(r){
+  const out = Object.fromEntries(KEYS.map(k=>[k,0]));
+  r.ing.forEach(i=>{
+    const key = i[3], q = amount(i);
+    if(!key || typeof q !== "number") return;
+    const row = FOOD[key];
+    const factor = row.u === "g" ? q/100 : q;
+    KEYS.forEach((k,idx)=> out[k] += factor * row.n[idx]);
+  });
+  return out;
+}
+
+function qty(i){
+  const q = amount(i);
+  if(typeof q !== "number") return q;
+  const u = i[3] && FOOD[i[3]] ? FOOD[i[3]].u : "g";
+  const base = u === "buc" ? `${q} buc` : `${q} g`;
+  const note = i[4] ? (gender === "m" ? i[4][0] : i[4][1]) : null;
+  return note ? `${note} · ${base}` : base;
+}
+
+function bulk(n, u){
+  if(u === "buc") return `${Math.round(n)} buc`;
+  return n >= 1000 ? `${(n/1000).toFixed(1).replace(".",",")} kg` : `${Math.round(n)} g`;
+}
+
+/* ============================================================
+   VIEW: MESE
+   ============================================================ */
+function cardHTML(r){
+  const n = nutri(r);
+  return `
+  <article class="recipe" data-card="${r.id}">
+    <div class="head">
+      <div class="ico" aria-hidden="true">${emHTML(r)}</div>
+      <div class="htx">
+        <b>${esc(r.name)}</b>
+        <span>${fmt(n.kcal)} kcal · ${fmt(n.p)} g P · ${fmt(n.c)} g C · ${fmt(n.f)} g G</span>
+      </div>
+    </div>
+
+    <div class="ing-block">
+      <div class="lbl-sec">Ingrediente <em>${r.ing.length}</em></div>
+      <div class="ing">${r.ing.map(i=>`<div><span>${esc(i[0])}</span><i>${esc(qty(i))}</i></div>`).join("")}</div>
+    </div>
+
+    <button class="more" aria-expanded="false">Preparare &amp; micronutrienți <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="drawer"><div><div class="drawer-in">
+      <p class="rdesc">${esc(r.desc)}</p>
+      <div class="lbl-sec">Preparare</div>
+      <ol class="steps">${r.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
+      <div class="micros">
+        <div><b>${fmt(n.fiber)} g</b><span>Fibre</span></div>
+        <div><b>${fmt(n.calcium)} mg</b><span>Calciu</span></div>
+        <div><b>${fmt(n.iron,1)} mg</b><span>Fier</span></div>
+        <div><b>${fmt(n.potassium)} mg</b><span>Potasiu</span></div>
+        <div><b>${fmt(n.vitC)} mg</b><span>Vit. C</span></div>
+        <div><b>${fmt(n.magnesium)} mg</b><span>Magneziu</span></div>
+      </div>
+    </div></div></div>
+  </article>`;
+}
+
+function optRow(label, items, selected, kind, wide){
+  return `<div class="prow">
+    <span class="plbl">${label}</span>
+    <div class="opts${wide?" wide":""}">${items.map((it,idx)=>`
+      <button class="opt" data-pick="${kind}" data-i="${idx}" aria-pressed="${idx===selected}">
+        <span class="oem">${it.em}</span><span>${esc(it.lbl || it.nume)}</span>
+      </button>`).join("")}</div>
+  </div>`;
+}
+
+function renderMeals(){
+  let html = "";
+  if(activeMeal === 1 || activeMeal === 4){
+    html = STATIC.filter(r=>r.meal===activeMeal).map(cardHTML).join("");
+  } else if(activeMeal === 2){
+    html = `<div class="picker">
+        ${optRow("Proteină", PROTEINE, selP2, "p2")}
+        ${optRow("Garnitură", GARNITURI, selG2, "g2", true)}
+      </div>` + cardHTML(buildM2(selP2, selG2));
+  } else {
+    html = `<div class="picker">
+        ${optRow("Proteină", PROTEINE, selP3, "p3")}
+      </div>` + cardHTML(buildM3(selP3));
+  }
+  $("meals").innerHTML = html;
+}
+
+function renderChips(){
+  $("mealbar").innerHTML = MEALS.map(m=>`
+    <button class="chip" role="tab" data-meal="${m}" aria-selected="${m===activeMeal}">${mealShort[m]}</button>`).join("");
+}
+
+/* ============================================================
+   VIEW: PLAN SĂPTĂMÂNAL
+   ============================================================ */
+function renderWeek(){
+  $("week").innerHTML = week.map(d=>{
+    const meals = d.ids.map(getRecipe);
+    let kcal = 0, prot = 0;
+    meals.forEach(r=>{ const n = nutri(r); kcal += n.kcal; prot += n.p });
+    return `<article class="day">
+      <div class="day-head">
+        <b>${d.day}</b>
+        <span>${fmt(kcal)} kcal · ${fmt(prot)} g proteină</span>
+      </div>
+      ${meals.map((r,k)=>`
+        <button class="dm" data-id="${r.id}">
+          <span class="dth" aria-hidden="true">${emHTML(r)}</span>
+          <span class="dtx"><small>${mealShort[MEALS[k]]}</small><b>${esc(r.name)}</b></span>
+          <span class="dk">${fmt(nutri(r).kcal)} kcal</span>
+        </button>`).join("")}
+    </article>`;
+  }).join("");
+}
+
+/* ============================================================
+   VIEW: LISTĂ CUMPĂRĂTURI
+   ============================================================ */
+/* Nu se cumpără săptămânal: apa, gheața, creatina. */
+const NO_SHOP = /^(Apă( \/ gheață)?|Creatină)$/;
+
+function shoppingData(){
+  const sums = {}, loose = new Set();
+  week.forEach(d => d.ids.map(getRecipe).forEach(r => r.ing.forEach(i=>{
+    const key = i[3], q = amount(i);
+    if(!key || typeof q !== "number"){
+      if(!NO_SHOP.test(i[0])) loose.add(i[0]);
+      return;
+    }
+    const sk = FOOD[key].shop || key;
+    sums[sk] = (sums[sk] || 0) + q;
+  })));
+  return {sums, loose:[...loose]};
+}
+
+function renderShop(){
+  const {sums, loose} = shoppingData();
+  const total = Object.keys(sums).length + loose.length;
+  const done = Object.keys(sums).filter(k=>bought[k]).length + loose.filter(l=>bought["_"+l]).length;
+  const check = `<svg viewBox="0 0 24 24"><path d="m5 13 4 4L19 7"/></svg>`;
+
+  let html = `<div class="shop-head">
+      <div>
+        <b>${done} din ${total} bifate</b>
+        <span>Pentru 7 zile · profil ${gender === "m" ? "bărbat" : "femeie"}</span>
+      </div>
+      <button class="reset" id="resetShop">Resetează</button>
+    </div>`;
+
+  CATS.forEach(([cat,label])=>{
+    const items = Object.keys(sums)
+      .filter(k => FOOD[k].cat === cat)
+      .sort((a,b)=> FOOD[a].lbl.localeCompare(FOOD[b].lbl,"ro"));
+    if(!items.length) return;
+    html += `<section class="cat"><h3>${label}</h3>${items.map(k=>`
+      <button class="si" data-k="${k}" aria-pressed="${!!bought[k]}">
+        <span class="cb">${check}</span>
+        <span class="sem" aria-hidden="true">${FOOD[k].em}</span>
+        <span class="si-name">${esc(FOOD[k].lbl)}</span>
+        <span class="si-qty">${bulk(sums[k], FOOD[k].u)}</span>
+      </button>`).join("")}</section>`;
+  });
+
+  if(loose.length){
+    html += `<section class="cat"><h3>Fără gramaj exact</h3>${loose.map(l=>`
+      <button class="si" data-k="_${esc(l)}" aria-pressed="${!!bought["_"+l]}">
+        <span class="cb">${check}</span>
+        <span class="sem" aria-hidden="true">🧂</span>
+        <span class="si-name">${esc(l)}</span>
+        <span class="si-qty">—</span>
+      </button>`).join("")}</section>`;
+  }
+
+  $("shop").innerHTML = html;
+}
+
+/* ============================================================
+   RENDER GLOBAL
+   ============================================================ */
+function renderAll(){ renderMeals(); renderWeek(); renderShop() }
+
+function setTab(t){
+  $("app").dataset.tab = t;
+  $("viewTitle").textContent = VIEW_TITLE[t];
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active", v.id === "view-"+t));
+  document.querySelectorAll(".tb").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===t));
+  window.scrollTo({top:0});
+}
+
+/* ============================================================
+   INTERACȚIUNI
+   ============================================================ */
+$("meals").addEventListener("click", e=>{
+  const pick = e.target.closest("[data-pick]");
+  if(pick){
+    const i = Number(pick.dataset.i);
+    if(pick.dataset.pick === "p2") selP2 = i;
+    else if(pick.dataset.pick === "g2") selG2 = i;
+    else selP3 = i;
+    renderMeals(); save();
+    return;
+  }
+  const b = e.target.closest(".more"); if(!b) return;
+  const card = b.closest(".recipe");
+  const open = card.classList.toggle("open");
+  b.setAttribute("aria-expanded", open);
+});
+
+$("mealbar").addEventListener("click", e=>{
+  const c = e.target.closest(".chip"); if(!c) return;
+  activeMeal = Number(c.dataset.meal);
+  renderChips(); renderMeals(); save();
+  c.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});
+  window.scrollTo({top:0});
+});
+
+$("week").addEventListener("click", e=>{
+  const b = e.target.closest(".dm"); if(!b) return;
+  const id = b.dataset.id;
+  if(id.startsWith("m2-")){ activeMeal = 2; selP2 = +id[3]; selG2 = +id[4] }
+  else if(id.startsWith("m3-")){ activeMeal = 3; selP3 = +id[3] }
+  else activeMeal = id.startsWith("m1-") ? 1 : 4;
+
+  renderChips(); renderMeals();
+  setTab("mese"); save();
+
+  const card = document.querySelector(`[data-card="${id}"]`);
+  if(card){
+    card.classList.add("open");
+    card.querySelector(".more").setAttribute("aria-expanded", true);
+    card.scrollIntoView({block:"start",behavior:"smooth"});
+  }
+});
+
+$("shop").addEventListener("click", e=>{
+  if(e.target.closest("#resetShop")){ bought = {}; save(); renderShop(); return }
+  const b = e.target.closest(".si"); if(!b) return;
+  const k = b.dataset.k;
+  if(bought[k]) delete bought[k]; else bought[k] = 1;
+  save(); renderShop();
+});
+
+document.querySelectorAll(".tb").forEach(b=> b.onclick = ()=> setTab(b.dataset.tab));
+
+document.querySelectorAll("[data-g]").forEach(b=> b.onclick = ()=>{
+  if(gender === b.dataset.g) return;
+  gender = b.dataset.g;
+  document.querySelectorAll("[data-g]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.g===gender));
+  renderAll(); save();
+  if(navigator.vibrate) try{ navigator.vibrate(8) }catch(e){}
+});
+
+const st = $("stickytop");
+addEventListener("scroll", ()=> st.classList.toggle("scrolled", window.scrollY > 4), {passive:true});
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+document.querySelectorAll("[data-g]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.g===gender));
+renderChips();
+renderAll();
+</script>
+</body>
+</html>
