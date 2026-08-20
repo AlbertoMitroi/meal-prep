@@ -3,29 +3,46 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" />
-<meta name="theme-color" content="#E8F5E9" />
+<meta name="theme-color" id="themeColor" content="#E8F5E9" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="description" content="Planul de mese: rețete, plan săptămânal și listă de cumpărături." />
 <title>Planul meselor</title>
 <style>
 :root{
   color-scheme:light;
-  /* Paletă Color Hunt: #E8F5E9 #A5D6A7 #66BB6A #1B5E20
+  /* PROFIL BĂRBAT — paletă „Verde natural" (Color Hunt)
+     #E8F5E9 #A5D6A7 #66BB6A #1B5E20
      colorhunt.co/palette/1b5e2066bb6aa5d6a7e8f5e9 */
   --bg:#E8F5E9;          /* mentă deschis — fundalul aplicației */
   --card:#FFFFFF;
   --soft:#DCEEDD;        /* verde foarte pal — chipsuri, plăcuțe */
   --soft-2:#A5D6A7;      /* verde pal — linii punctate, borduri bifă */
   --line:#CBE6CD;        /* linii și borduri */
-  --sage:#66BB6A;        /* verde mediu — accent secundar */
   --accentSoft:#CDE9CF;  /* verde diluat — fundaluri de secțiune */
   --accent:#1B5E20;      /* verde pădure — accentul principal */
   --text:#16261A; --muted:#52654F;
+  --bg-blur:rgba(232,245,233,.95);  /* bara lipită sus și jos */
+  --drawer:#F6FBF6;                 /* fundalul secțiunii extinse */
   --r:18px; --r-sm:14px;
   --shadow:0 6px 22px rgba(0,0,0,.05);
   --tap:44px;
   --safe-b:env(safe-area-inset-bottom,0px);
   --safe-t:env(safe-area-inset-top,0px);
+}
+
+/* PROFIL FEMEIE — paletă „Prună" (Color Hunt)
+   #F3F4F4 #853953 #612D53 #2C2C2C
+   colorhunt.co/palette/2c2c2c612d53853953f3f4f4 */
+:root[data-gender="f"]{
+  --bg:#F4F1F3;          /* gri-blush */
+  --soft:#F0E7EC;        /* blush pal */
+  --soft-2:#DCC7D2;      /* blush mediu */
+  --line:#E7DCE2;
+  --accentSoft:#EFE0E8;  /* prună diluată */
+  --accent:#612D53;      /* prună */
+  --text:#2C2C2C; --muted:#6B5561;
+  --bg-blur:rgba(244,241,243,.95);
+  --drawer:#FBF8FA;
 }
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -48,7 +65,7 @@ ol{margin:0;padding-left:1.15em}
 /* ================= header ================= */
 .stickytop{
   position:sticky;top:0;z-index:30;
-  background:rgba(232,245,233,.95);
+  background:var(--bg-blur);
   backdrop-filter:saturate(1.6) blur(16px);-webkit-backdrop-filter:saturate(1.6) blur(16px);
   border-bottom:1px solid transparent;transition:border-color .2s;
   padding-top:var(--safe-t);
@@ -133,7 +150,7 @@ main{padding:12px 14px calc(84px + var(--safe-b))}
 .drawer{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s cubic-bezier(.4,0,.2,1)}
 .recipe.open .drawer{grid-template-rows:1fr}
 .drawer>div{overflow:hidden}
-.drawer-in{padding:14px;border-top:1px solid var(--line);background:#F6FBF6}
+.drawer-in{padding:14px;border-top:1px solid var(--line);background:var(--drawer)}
 .rdesc{font-size:12px;color:var(--muted);line-height:1.45;margin:0 0 14px}
 .steps{font-size:12.5px;line-height:1.55;color:var(--muted)}
 .steps li+li{margin-top:6px}
@@ -187,7 +204,7 @@ main{padding:12px 14px calc(84px + var(--safe-b))}
 .tabbar{
   position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:40;
   width:100%;max-width:520px;display:grid;grid-template-columns:repeat(3,1fr);
-  background:rgba(232,245,233,.95);
+  background:var(--bg-blur);
   backdrop-filter:saturate(1.6) blur(16px);-webkit-backdrop-filter:saturate(1.6) blur(16px);
   border-top:1px solid var(--line);padding-bottom:var(--safe-b);
 }
@@ -670,10 +687,18 @@ $("shop").addEventListener("click", e=>{
 
 document.querySelectorAll(".tb").forEach(b=> b.onclick = ()=> setTab(b.dataset.tab));
 
+/* Fiecare profil are propria paletă: verde pentru bărbat, prună pentru femeie. */
+const THEME_COLOR = {m:"#E8F5E9", f:"#F4F1F3"};
+function applyTheme(){
+  document.documentElement.dataset.gender = gender;
+  $("themeColor").setAttribute("content", THEME_COLOR[gender]);
+  document.querySelectorAll("[data-g]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.g===gender));
+}
+
 document.querySelectorAll("[data-g]").forEach(b=> b.onclick = ()=>{
   if(gender === b.dataset.g) return;
   gender = b.dataset.g;
-  document.querySelectorAll("[data-g]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.g===gender));
+  applyTheme();
   renderAll(); save();
   if(navigator.vibrate) try{ navigator.vibrate(8) }catch(e){}
 });
@@ -684,7 +709,7 @@ addEventListener("scroll", ()=> st.classList.toggle("scrolled", window.scrollY >
 /* ============================================================
    BOOT
    ============================================================ */
-document.querySelectorAll("[data-g]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.g===gender));
+applyTheme();
 renderChips();
 renderAll();
 </script>
