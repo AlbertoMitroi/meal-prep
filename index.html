@@ -158,6 +158,10 @@ main{padding:12px 14px calc(84px + var(--safe-b))}
 .ico i{font-style:normal;font-size:12px;font-weight:800;color:var(--accent);opacity:.5}
 .htx{grid-column:span 3;min-width:0;padding-left:5px}
 .htx b{display:block;font-size:17px;font-weight:800;letter-spacing:-.025em;line-height:1.2}
+.htx small{display:block;margin-top:4px;font-size:11px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.opts.row{grid-template-columns:repeat(2,1fr);padding:0 0 14px}
+.opts.row .opt{flex-direction:row;gap:7px;min-height:42px;font-size:12px;padding:0 10px}
+.opts.row .oem{font-size:15px}
 
 .mstrip{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:0 14px 14px}
 .mstrip div{background:var(--soft);border-radius:14px;min-height:54px;padding:4px 3px;text-align:center;display:flex;flex-direction:column;justify-content:center}
@@ -348,9 +352,10 @@ const GARNITURI = [
   {nume:"cartofi copți",   lbl:"Cartofi copți", art:"cartofii copți",    ing:"Cartofi copți",          key:"potato",    em:"🥔"},
   {nume:"paste integrale", lbl:"Paste",         art:"pastele integrale", ing:"Paste integrale gătite", key:"pasta",     em:"🍝"}
 ];
-const G_GARN = [200,150];   // garnitură
-const G_PROT = [150,120];   // proteină
-const G_LEG  = [200,200];   // salată și legume
+const G_GARN      = [200,150];   // garnitură, la masa principală
+const G_PROT      = [150,120];   // proteină, la masa principală
+const G_PROT_CINA = [150,150];   // proteină la cină — 150 g pentru amândoi
+const G_LEG       = [200,200];   // salată și legume
 
 /* ============================================================
    REȚETE
@@ -403,7 +408,7 @@ function buildM3(pi){
   const p = PROTEINE[pi];
   return {
     id:`m3-${pi}`, meal:3, name:`${p.nume} cu salată și legume`, em:[p.em, "🥗"],
-    ing:[[p.ing,G_PROT[0],G_PROT[1],p.key],
+    ing:[[p.ing,G_PROT_CINA[0],G_PROT_CINA[1],p.key],
          ["Salată / legume",G_LEG[0],G_LEG[1],"salad"]]
   };
 }
@@ -436,10 +441,12 @@ const STORE = "mealplan.app";
 /* profile ("m" | "f") comandă meniurile, planul și tema.
    shopFor ("m" | "both" | "f") comandă doar lista de cumpărături. */
 let profile = "m", shopFor = "both", activeMeal = 1, selP2 = 0, selG2 = 0, selP3 = 0, bought = {}, tab = "mese";
+let weekView = "total";   // "total" pe săptămână · "avg" media pe zi
 try{
   const raw = JSON.parse(localStorage.getItem(STORE) || "{}");
   if(["m","f"].includes(raw.profile)) profile = raw.profile;
   if(["m","both","f"].includes(raw.shopFor)) shopFor = raw.shopFor;
+  if(["total","avg"].includes(raw.weekView)) weekView = raw.weekView;
   if(MEALS.includes(raw.meal)) activeMeal = raw.meal;
   if(raw.sel){
     if(raw.sel.p2 >= 0 && raw.sel.p2 < PROTEINE.length) selP2 = raw.sel.p2;
@@ -450,7 +457,7 @@ try{
 }catch(e){}
 function save(){
   try{ localStorage.setItem(STORE, JSON.stringify({
-    profile, shopFor, meal:activeMeal, sel:{p2:selP2, g2:selG2, p3:selP3}, bought
+    profile, shopFor, weekView, meal:activeMeal, sel:{p2:selP2, g2:selG2, p3:selP3}, bought
   })) }catch(e){}
 }
 
@@ -570,8 +577,65 @@ function renderChips(){
 /* ============================================================
    VIEW: PLAN SĂPTĂMÂNAL
    ============================================================ */
+const grup = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+/* Totalul celor 7 zile, sau media pe zi. */
+function weekTotals(){
+  const out = Object.fromEntries(KEYS.map(k=>[k,0]));
+  week.forEach(d => d.ids.map(getRecipe).forEach(r=>{
+    const n = nutri(r);
+    KEYS.forEach(k => out[k] += n[k]);
+  }));
+  if(weekView === "avg") KEYS.forEach(k => out[k] /= week.length);
+  return out;
+}
+
+function weekSummaryHTML(){
+  const t = weekTotals();
+  return `
+  <article class="recipe" data-card="week-sum">
+    <div class="head">
+      <div class="ico" aria-hidden="true">📊</div>
+      <div class="htx">
+        <b>${weekView === "avg" ? "Media pe zi" : "Total săptămână"}</b>
+        <small>${grup(t.kcal)} kcal · ${grup(t.p)} g proteină</small>
+      </div>
+    </div>
+
+    <button class="more" aria-expanded="false">Macro &amp; micronutrienți <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="drawer"><div><div class="drawer-in">
+      <div class="opts row">
+        <button class="opt" data-week="total" aria-pressed="${weekView==="total"}">
+          <span class="oem">📅</span><span>Pe săptămână</span></button>
+        <button class="opt" data-week="avg" aria-pressed="${weekView==="avg"}">
+          <span class="oem">📈</span><span>Media pe zi</span></button>
+      </div>
+
+      <div class="mstrip" style="padding:0 0 14px">
+        <div><b>${grup(t.kcal)}</b><span>kcal</span></div>
+        <div><b>${grup(t.p)}<i>g</i></b><span>proteină</span></div>
+        <div><b>${grup(t.c)}<i>g</i></b><span>carbo</span></div>
+        <div><b>${grup(t.f)}<i>g</i></b><span>grăsimi</span></div>
+      </div>
+
+      <div class="lbl-sec">Micronutrienți</div>
+      <div class="micros" style="margin-top:0">
+        <div><b>${grup(t.fiber)} g</b><span>Fibre</span></div>
+        <div><b>${grup(t.calcium)} mg</b><span>Calciu</span></div>
+        <div><b>${fmt(t.iron,1)} mg</b><span>Fier</span></div>
+        <div><b>${grup(t.potassium)} mg</b><span>Potasiu</span></div>
+        <div><b>${grup(t.vitC)} mg</b><span>Vit. C</span></div>
+        <div><b>${grup(t.magnesium)} mg</b><span>Magneziu</span></div>
+      </div>
+    </div></div></div>
+  </article>`;
+}
+
 function renderWeek(){
-  $("week").innerHTML = week.map(d=>{
+  const deschis = document.querySelector('[data-card="week-sum"]');
+  const eraDeschis = deschis ? deschis.classList.contains("open") : false;
+
+  $("week").innerHTML = weekSummaryHTML() + week.map(d=>{
     const meals = d.ids.map(getRecipe);
     const dayTotal = k => meals.reduce((sum,r)=> sum + nutri(r)[k], 0);
     return `<article class="day">
@@ -587,6 +651,12 @@ function renderWeek(){
         </button>`).join("")}
     </article>`;
   }).join("");
+
+  if(eraDeschis){
+    const c = document.querySelector('[data-card="week-sum"]');
+    c.classList.add("open");
+    c.querySelector(".more").setAttribute("aria-expanded", true);
+  }
 }
 
 /* ============================================================
@@ -697,6 +767,16 @@ $("mealbar").addEventListener("click", e=>{
 });
 
 $("week").addEventListener("click", e=>{
+  const w = e.target.closest("[data-week]");
+  if(w){ weekView = w.dataset.week; save(); renderWeek(); return }
+
+  const more = e.target.closest(".more");
+  if(more){
+    const card = more.closest(".recipe");
+    more.setAttribute("aria-expanded", card.classList.toggle("open"));
+    return;
+  }
+
   const b = e.target.closest(".dm"); if(!b) return;
   const id = b.dataset.id;
   if(id.startsWith("m2-")){ activeMeal = 2; selP2 = +id[3]; selG2 = +id[4] }
