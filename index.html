@@ -96,15 +96,12 @@ ol{margin:0;padding-left:1.15em}
   background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,.09);
   transition:transform .24s cubic-bezier(.4,0,.2,1);
 }
-.gswitch[data-g="both"] .knob{transform:translateX(40px)}
-.gswitch[data-g="f"]    .knob{transform:translateX(80px)}
+.knob{transform:translateX(calc(var(--i,0) * 40px))}
 .gi{
   position:relative;z-index:1;width:38px;height:34px;display:grid;place-items:center;
   font-size:15px;line-height:1;filter:grayscale(1);opacity:.45;transition:filter .2s,opacity .2s;
 }
-.gswitch[data-g="m"]    .gi[data-for="m"],
-.gswitch[data-g="both"] .gi[data-for="both"],
-.gswitch[data-g="f"]    .gi[data-for="f"]{filter:none;opacity:1}
+.gi[aria-pressed="true"]{filter:none;opacity:1}
 
 .mealbar{display:none;gap:6px;padding:0 14px 10px;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity}
 .mealbar::-webkit-scrollbar{display:none}
@@ -131,36 +128,42 @@ main{padding:12px 14px calc(84px + var(--safe-b))}
   background:var(--card);border:1px solid var(--line);border-radius:var(--r);
   box-shadow:var(--shadow);padding:12px 0 2px;margin-bottom:12px;
 }
-.prow{padding-bottom:10px}
-.plbl{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;color:var(--muted);padding:0 14px 7px}
-.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(102px,1fr));gap:6px;padding:0 14px}
-.opts.wide{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}
+.prow{padding-bottom:12px}
+.plbl{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;color:var(--muted);padding:0 14px 8px}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 14px}
+.opts.wide{grid-template-columns:repeat(5,1fr)}
 .opt{
-  min-height:38px;padding:0 8px;border-radius:999px;
-  background:var(--soft);font-size:12.5px;font-weight:700;color:var(--muted);
-  display:flex;align-items:center;justify-content:center;gap:6px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  min-height:62px;padding:8px 4px;border-radius:14px;
+  background:var(--soft);font-size:10px;font-weight:800;color:var(--muted);
+  line-height:1.2;text-align:center;letter-spacing:-.01em;
   transition:background .16s,color .16s,transform .12s;
 }
 .opt[aria-pressed="true"]{background:var(--accent);color:#fff}
-.opt:active{transform:scale(.96)}
-.oem{font-size:14px;line-height:1}
+.opt:active{transform:scale(.95)}
+.oem{font-size:19px;line-height:1}
 
 /* ================= card rețetă ================= */
 .recipe{
   background:var(--card);border:1px solid var(--line);border-radius:var(--r);
   box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;
 }
-.head{display:flex;align-items:center;gap:12px;padding:13px 14px}
+.head{display:flex;align-items:center;gap:12px;padding:13px 14px 12px}
 .ico{
   flex:0 0 auto;height:50px;min-width:50px;padding:0 11px;border-radius:15px;background:var(--soft);
   display:flex;align-items:center;justify-content:center;gap:5px;font-size:22px;line-height:1;
 }
 .ico i{font-style:normal;font-size:13px;font-weight:800;color:var(--accent);opacity:.55}
 .htx{min-width:0}
-.htx b{display:block;font-size:15.5px;font-weight:800;letter-spacing:-.022em;line-height:1.22}
-.htx span{display:block;margin-top:4px;font-size:11px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
-.htx span+span{margin-top:2px}
-.htx em{font-style:normal;font-size:11px;margin-right:3px}
+.htx b{display:block;font-size:16px;font-weight:800;letter-spacing:-.022em;line-height:1.22}
+
+.mstrip{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:0 14px 14px}
+.mstrip div{background:var(--soft);border-radius:12px;padding:9px 3px;text-align:center}
+.mstrip b{display:block;font-size:15px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.mstrip b i{font-style:normal;font-size:10px;font-weight:700;margin-left:1px}
+.mstrip span{display:block;font-size:8.5px;text-transform:uppercase;letter-spacing:.07em;font-weight:900;color:var(--muted);margin-top:3px}
+.mstrip div:first-child{background:var(--accentSoft)}
+.mstrip div:first-child b{color:var(--accent)}
 
 .ing-block{padding:12px 14px 13px;border-top:1px solid var(--line)}
 .lbl-sec{display:flex;align-items:baseline;justify-content:space-between;font-size:9px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;color:var(--muted);margin-bottom:7px}
@@ -251,12 +254,7 @@ main{padding:12px 14px calc(84px + var(--safe-b))}
   <div class="stickytop" id="stickytop">
     <div class="topbar">
       <h1 id="viewTitle">Mese</h1>
-      <div class="gswitch" id="gswitch" data-g="both" role="group" aria-label="Pentru cine">
-        <span class="knob" aria-hidden="true"></span>
-        <button class="gi" data-for="m"    aria-label="Bărbat">👨</button>
-        <button class="gi" data-for="both" aria-label="Amândoi">👫</button>
-        <button class="gi" data-for="f"    aria-label="Femeie">👩</button>
-      </div>
+      <div class="gswitch" id="gswitch" role="group" aria-label="Pentru cine"></div>
     </div>
     <div class="mealbar" id="mealbar" role="tablist" aria-label="Mese"></div>
   </div>
@@ -394,27 +392,17 @@ function buildM2(pi,gi){
   const p = PROTEINE[pi], g = GARNITURI[gi];
   return {
     id:`m2-${pi}${gi}`, meal:2, name:`${p.nume} cu ${g.nume}`, em:[p.em, g.em],
-    desc:`${g.ing} cu ${p.ing.toLowerCase()} și salată sau legume proaspete.`,
     ing:[[g.ing,G_GARN[0],G_GARN[1],g.key],
          [p.ing,G_PROT[0],G_PROT[1],p.key],
-         ["Salată / legume",G_LEG[0],G_LEG[1],"salad"]],
-    steps:[`Condimentează ${p.gen} și ${p.vb} în tigaie sau la cuptor.`,
-           `Pregătește ${g.art}.`,
-           "Adaugă salata sau legumele proaspete.",
-           "Cântărește porțiile după gătire."]
+         ["Salată / legume",G_LEG[0],G_LEG[1],"salad"]]
   };
 }
 function buildM3(pi){
   const p = PROTEINE[pi];
   return {
     id:`m3-${pi}`, meal:3, name:`${p.nume} cu salată și legume`, em:[p.em, "🥗"],
-    desc:`${p.ing} cu salată sau legume proaspete, fără garnitură.`,
     ing:[[p.ing,G_PROT[0],G_PROT[1],p.key],
-         ["Salată / legume",G_LEG[0],G_LEG[1],"salad"]],
-    steps:[`Condimentează ${p.gen} și ${p.vb}.`,
-           "Pregătește salata sau legumele.",
-           "Servește imediat.",
-           "Cântărește porția după gătire."]
+         ["Salată / legume",G_LEG[0],G_LEG[1],"salad"]]
   };
 }
 function getRecipe(id){
@@ -443,11 +431,13 @@ const week = DAYS.map((day,i)=>{
    STATE
    ============================================================ */
 const STORE = "mealplan.app";
-/* profile: "m" bărbat · "both" amândoi (implicit) · "f" femeie */
-let profile = "both", activeMeal = 1, selP2 = 0, selG2 = 0, selP3 = 0, bought = {};
+/* profile ("m" | "f") comandă meniurile, planul și tema.
+   shopFor ("m" | "both" | "f") comandă doar lista de cumpărături. */
+let profile = "m", shopFor = "both", activeMeal = 1, selP2 = 0, selG2 = 0, selP3 = 0, bought = {}, tab = "mese";
 try{
   const raw = JSON.parse(localStorage.getItem(STORE) || "{}");
-  if(["m","both","f"].includes(raw.profile)) profile = raw.profile;
+  if(["m","f"].includes(raw.profile)) profile = raw.profile;
+  if(["m","both","f"].includes(raw.shopFor)) shopFor = raw.shopFor;
   if(MEALS.includes(raw.meal)) activeMeal = raw.meal;
   if(raw.sel){
     if(raw.sel.p2 >= 0 && raw.sel.p2 < PROTEINE.length) selP2 = raw.sel.p2;
@@ -458,7 +448,7 @@ try{
 }catch(e){}
 function save(){
   try{ localStorage.setItem(STORE, JSON.stringify({
-    profile, meal:activeMeal, sel:{p2:selP2, g2:selG2, p3:selP3}, bought
+    profile, shopFor, meal:activeMeal, sel:{p2:selP2, g2:selG2, p3:selP3}, bought
   })) }catch(e){}
 }
 
@@ -469,9 +459,8 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmt = (n,d=0) => Number(n).toFixed(d).replace(/\.0$/,"");
 const amountFor = (i,g) => g === "m" ? i[1] : i[2];
-/* Profilurile din care se compun cifrele afișate. */
-const who = () => profile === "both" ? ["m","f"] : [profile];
-const EM = {m:"👨", f:"👩"};
+/* Profilurile însumate în lista de cumpărături. */
+const who = () => shopFor === "both" ? ["m","f"] : [shopFor];
 /* Emoji-urile combinației, legate cu „+". */
 const emHTML = r => r.em.join("<i>+</i>");
 
@@ -487,20 +476,15 @@ function nutriFor(r, g){
   return out;
 }
 
-/* La „amândoi" arătăm ambele valori, despărțite prin bară. */
-function pair(fn, dec){
-  const vals = who().map(fn);
-  if(vals.length === 1 || vals[0] === vals[1]) return fmt(vals[0], dec);
-  return vals.map(v=>fmt(v, dec)).join(" / ");
-}
+const nutri = r => nutriFor(r, profile);
 
 function qty(i){
-  if(typeof i[1] !== "number") return i[1];
+  const q = amountFor(i, profile);
+  if(typeof q !== "number") return q;
   const u = i[3] && FOOD[i[3]] ? FOOD[i[3]].u : "g";
-  const base = `${pair(g => amountFor(i, g))} ${u === "buc" ? "buc" : "g"}`;
-  if(!i[4]) return base;
-  const notes = [...new Set(who().map(g => g === "m" ? i[4][0] : i[4][1]))];
-  return `${notes.join(" / ")} · ${base}`;
+  const base = `${q} ${u === "buc" ? "buc" : "g"}`;
+  const note = i[4] ? (profile === "m" ? i[4][0] : i[4][1]) : null;
+  return note ? `${note} · ${base}` : base;
 }
 
 function bulk(n, u){
@@ -511,23 +495,20 @@ function bulk(n, u){
 /* ============================================================
    VIEW: MESE
    ============================================================ */
-function macroHTML(r){
-  return who().map(g=>{
-    const n = nutriFor(r, g);
-    const tag = profile === "both" ? `<em>${EM[g]}</em>` : "";
-    return `<span>${tag}${fmt(n.kcal)} kcal · ${fmt(n.p)} g P · ${fmt(n.c)} g C · ${fmt(n.f)} g G</span>`;
-  }).join("");
-}
-
 function cardHTML(r){
+  const n = nutri(r);
   return `
   <article class="recipe" data-card="${r.id}">
     <div class="head">
       <div class="ico" aria-hidden="true">${emHTML(r)}</div>
-      <div class="htx">
-        <b>${esc(r.name)}</b>
-        ${macroHTML(r)}
-      </div>
+      <div class="htx"><b>${esc(r.name)}</b></div>
+    </div>
+
+    <div class="mstrip">
+      <div><b>${fmt(n.kcal)}</b><span>kcal</span></div>
+      <div><b>${fmt(n.p)}<i>g</i></b><span>proteină</span></div>
+      <div><b>${fmt(n.c)}<i>g</i></b><span>carbo</span></div>
+      <div><b>${fmt(n.f)}<i>g</i></b><span>grăsimi</span></div>
     </div>
 
     <div class="ing-block">
@@ -535,18 +516,18 @@ function cardHTML(r){
       <div class="ing">${r.ing.map(i=>`<div><span>${esc(i[0])}</span><i>${esc(qty(i))}</i></div>`).join("")}</div>
     </div>
 
-    <button class="more" aria-expanded="false">Preparare &amp; micronutrienți <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="more" aria-expanded="false">${r.steps ? "Preparare &amp; micronutrienți" : "Micronutrienți"} <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
     <div class="drawer"><div><div class="drawer-in">
-      <p class="rdesc">${esc(r.desc)}</p>
-      <div class="lbl-sec">Preparare</div>
-      <ol class="steps">${r.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
+      ${r.desc ? `<p class="rdesc">${esc(r.desc)}</p>` : ""}
+      ${r.steps ? `<div class="lbl-sec">Preparare</div>
+      <ol class="steps">${r.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>` : ""}
       <div class="micros">
-        <div><b>${pair(g=>nutriFor(r,g).fiber)} g</b><span>Fibre</span></div>
-        <div><b>${pair(g=>nutriFor(r,g).calcium)} mg</b><span>Calciu</span></div>
-        <div><b>${pair(g=>nutriFor(r,g).iron,1)} mg</b><span>Fier</span></div>
-        <div><b>${pair(g=>nutriFor(r,g).potassium)} mg</b><span>Potasiu</span></div>
-        <div><b>${pair(g=>nutriFor(r,g).vitC)} mg</b><span>Vit. C</span></div>
-        <div><b>${pair(g=>nutriFor(r,g).magnesium)} mg</b><span>Magneziu</span></div>
+        <div><b>${fmt(n.fiber)} g</b><span>Fibre</span></div>
+        <div><b>${fmt(n.calcium)} mg</b><span>Calciu</span></div>
+        <div><b>${fmt(n.iron,1)} mg</b><span>Fier</span></div>
+        <div><b>${fmt(n.potassium)} mg</b><span>Potasiu</span></div>
+        <div><b>${fmt(n.vitC)} mg</b><span>Vit. C</span></div>
+        <div><b>${fmt(n.magnesium)} mg</b><span>Magneziu</span></div>
       </div>
     </div></div></div>
   </article>`;
@@ -590,17 +571,17 @@ function renderChips(){
 function renderWeek(){
   $("week").innerHTML = week.map(d=>{
     const meals = d.ids.map(getRecipe);
-    const dayTotal = (g,k) => meals.reduce((sum,r)=> sum + nutriFor(r,g)[k], 0);
+    const dayTotal = k => meals.reduce((sum,r)=> sum + nutri(r)[k], 0);
     return `<article class="day">
       <div class="day-head">
         <b>${d.day}</b>
-        <span>${pair(g=>dayTotal(g,"kcal"))} kcal · ${pair(g=>dayTotal(g,"p"))} g P</span>
+        <span>${fmt(dayTotal("kcal"))} kcal · ${fmt(dayTotal("p"))} g proteină</span>
       </div>
       ${meals.map((r,k)=>`
         <button class="dm" data-id="${r.id}">
           <span class="dth" aria-hidden="true">${emHTML(r)}</span>
           <span class="dtx"><small>${mealShort[MEALS[k]]}</small><b>${esc(r.name)}</b></span>
-          <span class="dk">${pair(g=>nutriFor(r,g).kcal)} kcal</span>
+          <span class="dk">${fmt(nutri(r).kcal)} kcal</span>
         </button>`).join("")}
     </article>`;
   }).join("");
@@ -639,7 +620,7 @@ function renderShop(){
   let html = `<div class="shop-head">
       <div>
         <b>${done} din ${total} bifate</b>
-        <span>Pentru 7 zile · ${PROFIL_NUME[profile]}</span>
+        <span>Pentru 7 zile · ${PROFIL_NUME[shopFor]}</span>
       </div>
       <button class="reset" id="resetShop">Resetează</button>
     </div>`;
@@ -677,7 +658,9 @@ function renderShop(){
 function renderAll(){ renderMeals(); renderWeek(); renderShop() }
 
 function setTab(t){
+  tab = t;
   $("app").dataset.tab = t;
+  applyTheme();
   $("viewTitle").textContent = VIEW_TITLE[t];
   document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active", v.id === "view-"+t));
   document.querySelectorAll(".tb").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===t));
@@ -741,23 +724,38 @@ document.querySelectorAll(".tb").forEach(b=> b.onclick = ()=> setTab(b.dataset.t
 
 /* Fiecare profil are propria paletă: verde pentru bărbat, prună pentru femeie. */
 const THEME_COLOR = {m:"#E8F5E9", both:"#EBF4F6", f:"#F4F1F3"};
-const ORDINE = ["m","both","f"];
+const SEG = {
+  m:    {em:"👨", lbl:"Bărbat"},
+  both: {em:"👫", lbl:"Amândoi"},
+  f:    {em:"👩", lbl:"Femeie"}
+};
+/* „Amândoi" are sens doar la cumpărături, deci apare doar acolo. */
+const segments = () => tab === "lista" ? ["m","both","f"] : ["m","f"];
+const current  = () => tab === "lista" ? shopFor : profile;
 
 function applyTheme(){
-  document.documentElement.dataset.gender = profile;
-  $("themeColor").setAttribute("content", THEME_COLOR[profile]);
+  const sel = current();
+  const segs = segments();
   const sw = $("gswitch");
-  sw.dataset.g = profile;
+
+  if(sw.dataset.segs !== segs.join("")){
+    sw.dataset.segs = segs.join("");
+    sw.innerHTML = `<span class="knob" aria-hidden="true"></span>` + segs.map(k=>`
+      <button class="gi" data-for="${k}" aria-label="${SEG[k].lbl}">${SEG[k].em}</button>`).join("");
+  }
+  sw.style.setProperty("--i", Math.max(0, segs.indexOf(sel)));
   sw.querySelectorAll(".gi").forEach(b=>
-    b.setAttribute("aria-pressed", b.dataset.for === profile));
+    b.setAttribute("aria-pressed", b.dataset.for === sel));
+
+  document.documentElement.dataset.gender = sel;
+  $("themeColor").setAttribute("content", THEME_COLOR[sel]);
 }
 
-/* Apeși pe o iconiță și o alegi; apeși pe cea activă și treci la următoarea. */
 $("gswitch").addEventListener("click", e=>{
   const b = e.target.closest(".gi"); if(!b) return;
-  profile = b.dataset.for === profile
-    ? ORDINE[(ORDINE.indexOf(profile) + 1) % ORDINE.length]
-    : b.dataset.for;
+  const val = b.dataset.for;
+  if(val === current()) return;
+  if(tab === "lista") shopFor = val; else { profile = val; syncURL() }
   applyTheme();
   renderAll(); save();
   if(navigator.vibrate) try{ navigator.vibrate(8) }catch(e){}
@@ -767,8 +765,37 @@ const st = $("stickytop");
 addEventListener("scroll", ()=> st.classList.toggle("scrolled", window.scrollY > 4), {passive:true});
 
 /* ============================================================
+   LINK DIRECT
+   #1 sau ?1 → bărbat · #2 sau ?2 → femeie
+   Merg și #p=1, #m, #barbat și variantele cu „?".
+   ============================================================ */
+const URL_PROFIL = {"1":"m", "m":"m", "barbat":"m", "bărbat":"m",
+                    "2":"f", "f":"f", "femeie":"f"};
+
+function profilDinURL(){
+  const raw = (location.hash.slice(1) || location.search.slice(1) || "")
+    .replace(/^p=/i, "").trim().toLowerCase();
+  return URL_PROFIL[decodeURIComponent(raw)] || null;
+}
+
+function syncURL(){
+  const h = profile === "m" ? "#1" : "#2";
+  if(location.hash !== h) history.replaceState(null, "", h);
+}
+
+addEventListener("hashchange", ()=>{
+  const p = profilDinURL();
+  if(!p || p === profile) return;
+  profile = p;
+  applyTheme(); renderAll(); save();
+});
+
+/* ============================================================
    BOOT
    ============================================================ */
+const dinURL = profilDinURL();
+if(dinURL) profile = dinURL;
+syncURL();
 applyTheme();
 renderChips();
 renderAll();
